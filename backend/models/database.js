@@ -106,7 +106,8 @@ const initDatabase = () => {
       VALUES (?, ?, ?, ?)
     `);
     
-    stmt.run('admin', 'admin@example.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+    // 密码: password
+    stmt.run('admin', 'admin@example.com', '$2a$10$Ytz63pqyeAWrfXs/fecwbuyqoxKHtJVELu7x3cV6swJzr1HbFR7uq', 'admin');
     
     console.log('Database initialized successfully');
     return Promise.resolve();

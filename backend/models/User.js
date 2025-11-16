@@ -80,10 +80,10 @@ class User {
   }
   
   static async getStats() {
-    const totalUsers = await dbGet('SELECT COUNT(*) as count FROM users WHERE role = "user"');
-    const totalAdmins = await dbGet('SELECT COUNT(*) as count FROM users WHERE role = "admin"');
+    const totalUsers = await dbGet("SELECT COUNT(*) as count FROM users WHERE role = 'user'");
+    const totalAdmins = await dbGet("SELECT COUNT(*) as count FROM users WHERE role = 'admin'");
     const recentUsers = await dbAll(
-      'SELECT id, username, email, created_at FROM users WHERE role = "user" ORDER BY created_at DESC LIMIT 5'
+      "SELECT id, username, email, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC LIMIT 5"
     );
     
     return {

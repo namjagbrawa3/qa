@@ -108,8 +108,8 @@ class Question {
   
   static async getStats() {
     const totalQuestions = await dbGet('SELECT COUNT(*) as count FROM questions');
-    const singleChoiceCount = await dbGet('SELECT COUNT(*) as count FROM questions WHERE type = "single"');
-    const multipleChoiceCount = await dbGet('SELECT COUNT(*) as count FROM questions WHERE type = "multiple"');
+    const singleChoiceCount = await dbGet("SELECT COUNT(*) as count FROM questions WHERE type = 'single'");
+    const multipleChoiceCount = await dbGet("SELECT COUNT(*) as count FROM questions WHERE type = 'multiple'");
     const withMediaCount = await dbGet(
       'SELECT COUNT(*) as count FROM questions WHERE image_url IS NOT NULL OR audio_url IS NOT NULL OR video_url IS NOT NULL'
     );
