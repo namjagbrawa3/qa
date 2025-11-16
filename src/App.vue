@@ -98,9 +98,15 @@
     </nav>
 
     <!-- 主内容区域 -->
-    <main :class="authStore.isAuthenticated ? 'max-w-7xl mx-auto py-6 sm:px-6 lg:px-8' : ''">
+    <main :class="[
+      authStore.isAuthenticated ? 'max-w-7xl mx-auto py-6 sm:px-6 lg:px-8' : '',
+      authStore.isAuthenticated ? 'pb-20 md:pb-6' : ''
+    ]">
       <router-view />
     </main>
+
+    <!-- 移动端导航 -->
+    <MobileNav v-if="authStore.isAuthenticated" />
   </div>
 </template>
 
@@ -108,6 +114,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth.js'
+import MobileNav from './components/MobileNav.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

@@ -45,23 +45,15 @@
 
     <!-- 题目列表 -->
     <div class="mt-8 flex flex-col">
-      <div v-if="examStore.questionsLoading" class="text-center py-12">
-        <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-white bg-blue-500">
-          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          加载中...
-        </div>
-      </div>
+      <LoadingSpinner v-if="examStore.questionsLoading" />
 
-      <div v-else-if="filteredQuestions.length === 0" class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">暂无题目</h3>
-        <p class="mt-1 text-sm text-gray-500">开始创建第一个题目吧。</p>
-        <div class="mt-6">
+      <EmptyState
+        v-else-if="filteredQuestions.length === 0"
+        title="暂无题目"
+        description="开始创建第一个题目吧。"
+        icon="question"
+      >
+        <template #action>
           <button
             @click="openModal()"
             type="button"
@@ -72,14 +64,14 @@
             </svg>
             添加题目
           </button>
-        </div>
-      </div>
+        </template>
+      </EmptyState>
 
       <div v-else class="space-y-6">
         <div
           v-for="question in filteredQuestions"
           :key="question.id"
-          class="bg-white shadow rounded-lg p-6"
+          class="bg-white shadow rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1">
@@ -129,16 +121,16 @@
               </div>
             </div>
             
-            <div class="flex items-center space-x-2 ml-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 ml-4">
               <button
                 @click="openModal(question)"
-                class="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                class="text-blue-600 hover:text-blue-900 text-sm font-medium px-2 py-1 rounded hover:bg-blue-50"
               >
                 编辑
               </button>
               <button
                 @click="deleteQuestion(question)"
-                class="text-red-600 hover:text-red-900 text-sm font-medium"
+                class="text-red-600 hover:text-red-900 text-sm font-medium px-2 py-1 rounded hover:bg-red-50"
               >
                 删除
               </button>
@@ -322,6 +314,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useExamStore } from '../stores/exam.js'
 import { useAuthStore } from '../stores/auth.js'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
+import EmptyState from '../components/EmptyState.vue'
 
 const examStore = useExamStore()
 const authStore = useAuthStore()
