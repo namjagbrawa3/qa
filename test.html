@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线答题考试系统</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="app">
+        <!-- 导航栏 -->
+        <nav class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 flex items-center">
+                            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <h1 class="text-xl font-semibold text-gray-900">在线答题考试系统</h1>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button @click="currentView = 'dashboard'" 
+                                class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                                :class="{ 'text-blue-600 bg-blue-50': currentView === 'dashboard' }">
+                            首页
+                        </button>
+                        <button @click="currentView = 'questions'" 
+                                class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                                :class="{ 'text-blue-600 bg-blue-50': currentView === 'questions' }">
+                            题库管理
+                        </button>
+                        <button @click="currentView = 'exams'" 
+                                class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                                :class="{ 'text-blue-600 bg-blue-50': currentView === 'exams' }">
+                            试卷管理
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容区域 -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- 仪表板 -->
+            <div v-if="currentView === 'dashboard'" class="px-4 py-6 sm:px-0">
+                <!-- 欢迎区域 -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 mb-8">
+                    <div class="text-center">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-4">欢迎使用答题考试系统</h1>
+                        <p class="text-lg text-gray-600 mb-6">支持题库管理、试卷创建、在线考试，提供加分制和减分制两种计分模式</p>
+                        <div class="flex justify-center space-x-4">
+                            <button @click="currentView = 'questions'"
+                                    class="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                                题库管理
+                            </button>
+                            <button @click="currentView = 'exams'"
+                                    class="border border-blue-600 text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors">
+                                创建试卷
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-2xl font-bold text-gray-900">{{ questions.length }}</p>
+                                <p class="text-sm text-gray-600">题库题目</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-2xl font-bold text-gray-900">{{ exams.length }}</p>
+                                <p class="text-sm text-gray-600">已创建试卷</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-2xl font-bold text-gray-900">{{ examRecords.length }}</p>
+                                <p class="text-sm text-gray-600">参与考试人数</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 试卷列表 -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="text-lg font-medium text-gray-900">试卷列表</h2>
+                        <button @click="currentView = 'exams'"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                            创建新试卷
+                        </button>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div v-if="exams.length === 0" class="text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">暂无试卷</h3>
+                            <p class="mt-1 text-sm text-gray-500">开始创建您的第一份试卷</p>
+                            <div class="mt-6">
+                                <button @click="currentView = 'exams'"
+                                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                    创建第一份试卷
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div v-for="exam in exams" :key="exam.id"
+                                 class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <h3 class="font-medium text-gray-900 mb-2">{{ exam.title }}</h3>
+                                <p class="text-sm text-gray-600 mb-3">{{ exam.description }}</p>
+                                <div class="flex justify-between items-center text-xs text-gray-500">
+                                    <span>{{ exam.questions.length }} 题</span>
+                                    <span>{{ exam.totalScore }} 分</span>
+                                </div>
+                                <div class="mt-3 flex space-x-2">
+                                    <button @click="startExam(exam)"
+                                            class="flex-1 bg-blue-600 text-white text-center py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors">
+                                        开始考试
+                                    </button>
+                                    <button @click="deleteExam(exam.id)"
+                                            class="px-3 py-2 border border-red-300 text-red-600 rounded text-sm hover:bg-red-50 transition-colors">
+                                        删除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 题库管理 -->
+            <div v-if="currentView === 'questions'" class="px-4 py-6 sm:px-0">
+                <div class="sm:flex sm:items-center">
+                    <div class="sm:flex-auto">
+                        <h1 class="text-2xl font-semibold text-gray-900">题库管理</h1>
+                        <p class="mt-2 text-sm text-gray-700">管理考试题目，支持单选题和多选题</p>
+                    </div>
+                    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                        <button @click="showAddModal = true"
+                                class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+                            添加题目
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 题目列表 -->
+                <div class="mt-8 bg-white rounded-lg shadow overflow-hidden">
+                    <div v-if="questions.length === 0" class="text-center py-12">
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">暂无题目</h3>
+                        <p class="mt-1 text-sm text-gray-500">开始添加您的第一道题目</p>
+                    </div>
+                    <div v-else class="divide-y divide-gray-200">
+                        <div v-for="question in questions" :key="question.id" class="p-6">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-2">{{ question.question }}</h3>
+                                    <div class="text-sm text-gray-600 mb-2">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                                              :class="question.type === 'single' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'">
+                                            {{ question.type === 'single' ? '单选题' : '多选题' }}
+                                        </span>
+                                        <span class="ml-2">{{ question.score }} 分</span>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <div v-for="(option, index) in question.options" :key="index" class="flex items-center text-sm">
+                                            <span class="mr-2">{{ String.fromCharCode(65 + index) }}.</span>
+                                            <span>{{ option }}</span>
+                                            <span v-if="isCorrectOption(question, index)" class="ml-2 text-green-600">✓</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button @click="deleteQuestion(question.id)"
+                                        class="ml-4 text-red-600 hover:text-red-900 text-sm">
+                                    删除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 试卷管理 -->
+            <div v-if="currentView === 'exams'" class="px-4 py-6 sm:px-0">
+                <div class="sm:flex sm:items-center">
+                    <div class="sm:flex-auto">
+                        <h1 class="text-2xl font-semibold text-gray-900">试卷管理</h1>
+                        <p class="mt-2 text-sm text-gray-700">创建和管理考试试卷</p>
+                    </div>
+                    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                        <button @click="showCreateModal = true"
+                                class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+                            创建试卷
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 试卷列表 -->
+                <div class="mt-8">
+                    <div v-if="exams.length === 0" class="text-center py-12 bg-white rounded-lg shadow">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">暂无试卷</h3>
+                        <p class="mt-1 text-sm text-gray-500">开始创建您的第一份试卷</p>
+                    </div>
+
+                    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div v-for="exam in exams" :key="exam.id"
+                             class="bg-white rounded-lg shadow border border-gray-200 p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">{{ exam.title }}</h3>
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                                      :class="getScoringModeClass(exam.scoringMode)">
+                                    {{ getScoringModeText(exam.scoringMode) }}
+                                </span>
+                            </div>
+                            
+                            <p class="text-sm text-gray-600 mb-4">{{ exam.description }}</p>
+                            
+                            <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
+                                <span>{{ exam.questions.length }} 题</span>
+                                <span>{{ exam.totalScore }} 分</span>
+                                <span>{{ exam.timeLimit }} 分钟</span>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <button @click="startExam(exam)"
+                                        class="flex-1 bg-blue-600 text-white text-center py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors">
+                                    开始考试
+                                </button>
+                                <button @click="deleteExam(exam.id)"
+                                        class="px-3 py-2 border border-red-300 text-red-600 rounded text-sm hover:bg-red-50 transition-colors">
+                                    删除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 考试页面 -->
+            <div v-if="currentView === 'exam'" class="px-4 py-6 sm:px-0">
+                <div v-if="!examStarted" class="max-w-2xl mx-auto">
+                    <div class="bg-white rounded-lg shadow p-8">
+                        <h1 class="text-2xl font-bold text-gray-900 mb-4">{{ currentExam.title }}</h1>
+                        <p class="text-gray-600 mb-6">{{ currentExam.description }}</p>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-500">题目数量</div>
+                                <div class="text-xl font-semibold text-gray-900">{{ currentExam.questions.length }} 题</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-500">总分</div>
+                                <div class="text-xl font-semibold text-gray-900">{{ currentExam.totalScore }} 分</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-500">考试时长</div>
+                                <div class="text-xl font-semibold text-gray-900">{{ currentExam.timeLimit }} 分钟</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-500">计分模式</div>
+                                <div class="text-xl font-semibold text-gray-900">
+                                    {{ getScoringModeText(currentExam.scoringMode) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                            <h3 class="text-sm font-medium text-yellow-800 mb-2">考试说明：</h3>
+                            <ul class="text-sm text-yellow-700 space-y-1">
+                                <li v-if="currentExam.scoringMode === 'add'">• 加分制：答对题目获得相应分数，答错不扣分</li>
+                                <li v-else-if="currentExam.scoringMode === 'subtract'">• 减分制：答对题目获得相应分数，答错扣除相应分数</li>
+                                <li v-else-if="currentExam.scoringMode === 'unlimited'">• 无限制：从满分开始，答错扣分，答完所有题目后继续随机抽题，直到分数归零</li>
+                                <li v-if="currentExam.scoringMode !== 'unlimited'">• 请在规定时间内完成所有题目</li>
+                                <li v-if="currentExam.scoringMode === 'unlimited'">• 无时间限制，挑战持续到分数归零</li>
+                                <li v-if="currentExam.scoringMode !== 'unlimited'">• 提交后无法修改答案</li>
+                                <li v-if="currentExam.scoringMode === 'unlimited'">• 每题答完立即显示结果，无法修改</li>
+                            </ul>
+                        </div>
+
+                        <button @click="startExamProcess"
+                                class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                            开始考试
+                        </button>
+                    </div>
+                </div>
+
+                <div v-else-if="!examFinished" class="max-w-4xl mx-auto">
+                    <!-- 无限制模式考试进行中 -->
+                    <div v-if="currentExam.scoringMode === 'unlimited'" class="max-w-2xl mx-auto">
+                        <div class="bg-white rounded-lg shadow mb-6">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <h1 class="text-xl font-semibold text-gray-900 text-center">{{ currentExam.title }}</h1>
+                                <div class="flex justify-center items-center space-x-8 mt-4">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-blue-600">{{ currentScore }}</div>
+                                        <div class="text-sm text-gray-500">当前分数</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-green-600">{{ unlimitedAnswered }}</div>
+                                        <div class="text-sm text-gray-500">已答题数</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="unlimitedQuestions.length > 0 && currentQuestionIndex < unlimitedQuestions.length" class="bg-white rounded-lg shadow p-6">
+                            <div class="text-center mb-6">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                                    第 {{ unlimitedAnswered + 1 }} 题
+                                </span>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <h3 class="text-xl font-medium text-gray-900 mb-4 text-center">
+                                    {{ unlimitedQuestions[currentQuestionIndex]?.question }}
+                                    <span class="ml-2 text-lg text-red-600">({{ unlimitedQuestions[currentQuestionIndex]?.score }}分)</span>
+                                </h3>
+                                
+                                <div class="space-y-3">
+                                    <div v-for="(option, optionIndex) in unlimitedQuestions[currentQuestionIndex]?.options" 
+                                         :key="optionIndex"
+                                         class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                         @click="selectUnlimitedOption(optionIndex)">
+                                        <input v-if="unlimitedQuestions[currentQuestionIndex]?.type === 'single'"
+                                               v-model="currentAnswer"
+                                               :value="optionIndex"
+                                               type="radio" 
+                                               :name="`unlimited-question`"
+                                               class="mr-3" />
+                                        <input v-else
+                                               v-model="currentAnswer"
+                                               :value="optionIndex"
+                                               type="checkbox" 
+                                               class="mr-3" />
+                                        <label class="text-gray-700 cursor-pointer flex-1">
+                                            {{ String.fromCharCode(65 + optionIndex) }}. {{ option }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <button @click="submitCurrentAnswer"
+                                        :disabled="!hasValidAnswer"
+                                        class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                                    提交答案
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 传统模式考试进行中 -->
+                    <div v-else>
+                        <div class="bg-white rounded-lg shadow mb-6">
+                            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                                <h1 class="text-xl font-semibold text-gray-900">{{ currentExam.title }}</h1>
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-sm text-gray-600">
+                                        剩余时间: <span class="font-medium text-red-600">{{ formatTime(timeRemaining) }}</span>
+                                    </div>
+                                    <button @click="submitExamProcess"
+                                            class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700">
+                                        提交试卷
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div v-for="(questionId, index) in currentExam.questions" :key="questionId" class="mb-8 last:mb-0">
+                                <div class="border-b border-gray-200 pb-6 last:border-b-0">
+                                    <div class="flex items-start mb-4">
+                                        <span class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium mr-4">
+                                            {{ index + 1 }}
+                                        </span>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                                                {{ getQuestion(questionId)?.question }}
+                                                <span class="ml-2 text-sm text-gray-500">({{ getQuestion(questionId)?.score }}分)</span>
+                                            </h3>
+                                            
+                                            <div class="space-y-2">
+                                                <div v-for="(option, optionIndex) in getQuestion(questionId)?.options" 
+                                                     :key="optionIndex"
+                                                     class="flex items-center">
+                                                    <input v-if="getQuestion(questionId)?.type === 'single'"
+                                                           v-model="answers[questionId]"
+                                                           :value="optionIndex"
+                                                           type="radio" 
+                                                           :name="`question-${questionId}`"
+                                                           class="mr-3" />
+                                                    <input v-else
+                                                           v-model="answers[questionId]"
+                                                           :value="optionIndex"
+                                                           type="checkbox" 
+                                                           class="mr-3" />
+                                                    <label class="text-gray-700">
+                                                        {{ String.fromCharCode(65 + optionIndex) }}. {{ option }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class="max-w-2xl mx-auto">
+                    <!-- 考试结果 -->
+                    <div class="bg-white rounded-lg shadow p-8">
+                        <div class="text-center mb-8">
+                            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">考试完成！</h2>
+                            <p class="text-gray-600">您的考试结果如下</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-8">
+                            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-blue-600">{{ examResult.totalScore }}</div>
+                                <div class="text-sm text-blue-600">总得分</div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-green-600">{{ examResult.correctCount }}/{{ examResult.totalQuestions }}</div>
+                                <div class="text-sm text-green-600">正确题数</div>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-4">
+                            <button @click="currentView = 'dashboard'"
+                                    class="flex-1 bg-blue-600 text-white text-center py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                                返回首页
+                            </button>
+                            <button @click="currentView = 'exams'"
+                                    class="flex-1 border border-blue-600 text-blue-600 text-center py-3 px-4 rounded-lg font-medium hover:bg-blue-50 transition-colors">
+                                查看更多试卷
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 添加题目模态框 -->
+        <div v-if="showAddModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">添加新题目</h3>
+                    
+                    <form @submit.prevent="addNewQuestion">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">题目类型</label>
+                            <select v-model="newQuestion.type" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                                <option value="single">单选题</option>
+                                <option value="multiple">多选题</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">题目内容</label>
+                            <textarea v-model="newQuestion.question" 
+                                      rows="3" 
+                                      class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                      required></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">选项</label>
+                            <div v-for="(option, index) in newQuestion.options" :key="index" class="flex items-center mb-2">
+                                <span class="mr-2 w-6">{{ String.fromCharCode(65 + index) }}.</span>
+                                <input v-model="newQuestion.options[index]" 
+                                       type="text" 
+                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 mr-2"
+                                       required />
+                                <button v-if="newQuestion.options.length > 2"
+                                        @click="removeOption(index)"
+                                        type="button"
+                                        class="text-red-600 hover:text-red-800">
+                                    删除
+                                </button>
+                            </div>
+                            <button @click="addOption"
+                                    type="button"
+                                    class="text-blue-600 hover:text-blue-800 text-sm">
+                                + 添加选项
+                            </button>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">正确答案</label>
+                            <div v-if="newQuestion.type === 'single'">
+                                <div v-for="(option, index) in newQuestion.options" :key="index" class="flex items-center mb-1">
+                                    <input v-model="newQuestion.correctAnswer" 
+                                           :value="index"
+                                           type="radio" 
+                                           class="mr-2" />
+                                    <span>{{ String.fromCharCode(65 + index) }}. {{ option }}</span>
+                                </div>
+                            </div>
+                            <div v-else>
+                                <div v-for="(option, index) in newQuestion.options" :key="index" class="flex items-center mb-1">
+                                    <input v-model="newQuestion.correctAnswer" 
+                                           :value="index"
+                                           type="checkbox" 
+                                           class="mr-2" />
+                                    <span>{{ String.fromCharCode(65 + index) }}. {{ option }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">分值</label>
+                            <input v-model.number="newQuestion.score" 
+                                   type="number" 
+                                   min="1"
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                   required />
+                        </div>
+
+                        <div class="flex justify-end space-x-3">
+                            <button @click="showAddModal = false"
+                                    type="button"
+                                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                取消
+                            </button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+                                添加题目
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 创建试卷模态框 -->
+        <div v-if="showCreateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">创建新试卷</h3>
+                    
+                    <form @submit.prevent="createNewExam">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">试卷标题</label>
+                            <input v-model="newExam.title" 
+                                   type="text" 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                   required />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">试卷描述</label>
+                            <textarea v-model="newExam.description" 
+                                      rows="3" 
+                                      class="w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">计分模式</label>
+                            <select v-model="newExam.scoringMode" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                                <option value="add">加分制（答对加分，答错不扣分）</option>
+                                <option value="subtract">减分制（答对加分，答错扣分）</option>
+                                <option value="unlimited">无限制（满分开始，答错扣分，答完继续抽题）</option>
+                            </select>
+                        </div>
+
+                        <div v-if="newExam.scoringMode === 'unlimited'" class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">满分设置</label>
+                            <input v-model.number="newExam.maxScore" 
+                                   type="number" 
+                                   min="50"
+                                   max="1000"
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                   placeholder="例如：100">
+                            <p class="text-sm text-gray-500 mt-1">无限制模式下的初始满分，答错题目会扣分直到分数为0</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">考试时长（分钟）</label>
+                            <input v-model.number="newExam.timeLimit" 
+                                   type="number" 
+                                   min="1"
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                   required />
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">选择题目</label>
+                            <div class="max-h-60 overflow-y-auto border border-gray-300 rounded-md p-3">
+                                <div v-for="question in questions" :key="question.id" class="flex items-start mb-3">
+                                    <input v-model="newExam.questions" 
+                                           :value="question.id"
+                                           type="checkbox" 
+                                           class="mt-1 mr-3" />
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">{{ question.question }}</p>
+                                        <p class="text-xs text-gray-500">
+                                            {{ question.type === 'single' ? '单选题' : '多选题' }} - {{ question.score }}分
+                                        </p>
+                                    </div>
+                                </div>
+                                <div v-if="questions.length === 0" class="text-center text-gray-500 py-4">
+                                    暂无题目，请先添加题目到题库
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3">
+                            <button @click="showCreateModal = false"
+                                    type="button"
+                                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                取消
+                            </button>
+                            <button type="submit"
+                                    :disabled="newExam.questions.length === 0"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400">
+                                创建试卷
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+
+        createApp({
+            setup() {
+                // 状态管理
+                const currentView = ref('dashboard');
+                const showAddModal = ref(false);
+                const showCreateModal = ref(false);
+                
+                // 数据
+                const questions = ref([
+                    {
+                        id: 1,
+                        type: 'single',
+                        question: '以下哪个是Vue.js的核心特性？',
+                        options: ['响应式数据绑定', '虚拟DOM', '组件化', '以上都是'],
+                        correctAnswer: 3,
+                        score: 10
+                    },
+                    {
+                        id: 2,
+                        type: 'single',
+                        question: 'JavaScript中哪个方法用于添加数组元素？',
+                        options: ['push()', 'add()', 'insert()', 'append()'],
+                        correctAnswer: 0,
+                        score: 10
+                    },
+                    {
+                        id: 3,
+                        type: 'multiple',
+                        question: '以下哪些是CSS预处理器？',
+                        options: ['Sass', 'Less', 'Stylus', 'PostCSS'],
+                        correctAnswer: [0, 1, 2],
+                        score: 15
+                    },
+                    {
+                        id: 4,
+                        type: 'single',
+                        question: 'HTML5新增的语义化标签包括？',
+                        options: ['<header>', '<nav>', '<section>', '以上都是'],
+                        correctAnswer: 3,
+                        score: 10
+                    }
+                ]);
+
+                const exams = ref([]);
+                const examRecords = ref([]);
+
+                // 新题目表单
+                const newQuestion = ref({
+                    type: 'single',
+                    question: '',
+                    options: ['', ''],
+                    correctAnswer: 0,
+                    score: 10
+                });
+
+                // 新试卷表单
+                const newExam = ref({
+                    title: '',
+                    description: '',
+                    questions: [],
+                    scoringMode: 'add',
+                    timeLimit: 60,
+                    maxScore: 100
+                });
+
+                // 考试相关状态
+                const currentExam = ref(null);
+                const examStarted = ref(false);
+                const examFinished = ref(false);
+                const timeRemaining = ref(0);
+                const answers = ref({});
+                const examResult = ref(null);
+                let timer = null;
+
+                // 无限制模式状态
+                const currentScore = ref(0);
+                const currentQuestionIndex = ref(0);
+                const unlimitedQuestions = ref([]);
+                const unlimitedAnswered = ref(0);
+                const currentAnswer = ref(null);
+
+                // 方法
+                // 无限制模式函数
+                const getRandomQuestions = () => {
+                    const availableQuestions = [...questions.value];
+                    const randomQuestions = [];
+                    
+                    // 先添加试卷中的所有题目
+                    currentExam.value.questions.forEach(questionId => {
+                        const question = questions.value.find(q => q.id === questionId);
+                        if (question) {
+                            randomQuestions.push(question);
+                        }
+                    });
+                    
+                    return randomQuestions;
+                };
+
+                const submitUnlimitedAnswer = (questionId, answer) => {
+                    const question = questions.value.find(q => q.id === questionId);
+                    if (!question) return;
+
+                    let isCorrect = false;
+                    if (question.type === 'single') {
+                        isCorrect = question.correctAnswer === answer;
+                    } else {
+                        isCorrect = Array.isArray(answer) && Array.isArray(question.correctAnswer) &&
+                                   answer.length === question.correctAnswer.length &&
+                                   answer.every(a => question.correctAnswer.includes(a));
+                    }
+
+                    if (!isCorrect) {
+                        currentScore.value -= question.score;
+                    }
+
+                    unlimitedAnswered.value++;
+
+                    // 检查是否需要结束考试
+                    if (currentScore.value <= 0) {
+                        examFinished.value = true;
+                        examResult.value = {
+                            score: 0,
+                            totalScore: currentExam.value.maxScore || 100,
+                            questionsAnswered: unlimitedAnswered.value,
+                            mode: 'unlimited'
+                        };
+                        return;
+                    }
+
+                    // 移动到下一题
+                    currentQuestionIndex.value++;
+                    
+                    // 如果答完了所有题目，重新随机选择
+                    if (currentQuestionIndex.value >= unlimitedQuestions.value.length) {
+                        unlimitedQuestions.value = getRandomQuestions();
+                        currentQuestionIndex.value = 0;
+                    }
+
+                    // 重置当前答案
+                    currentAnswer.value = unlimitedQuestions.value[currentQuestionIndex.value]?.type === 'multiple' ? [] : null;
+                };
+
+                const selectUnlimitedOption = (optionIndex) => {
+                    const currentQuestion = unlimitedQuestions.value[currentQuestionIndex.value];
+                    if (!currentQuestion) return;
+
+                    if (currentQuestion.type === 'single') {
+                        currentAnswer.value = optionIndex;
+                    } else {
+                        if (!Array.isArray(currentAnswer.value)) {
+                            currentAnswer.value = [];
+                        }
+                        const index = currentAnswer.value.indexOf(optionIndex);
+                        if (index > -1) {
+                            currentAnswer.value.splice(index, 1);
+                        } else {
+                            currentAnswer.value.push(optionIndex);
+                        }
+                    }
+                };
+
+                const submitCurrentAnswer = () => {
+                    const currentQuestion = unlimitedQuestions.value[currentQuestionIndex.value];
+                    if (!currentQuestion || !hasValidAnswer.value) return;
+
+                    submitUnlimitedAnswer(currentQuestion.id, currentAnswer.value);
+                };
+
+                const hasValidAnswer = computed(() => {
+                    const currentQuestion = unlimitedQuestions.value[currentQuestionIndex.value];
+                    if (!currentQuestion) return false;
+
+                    if (currentQuestion.type === 'single') {
+                        return currentAnswer.value !== null && currentAnswer.value !== undefined;
+                    } else {
+                        return Array.isArray(currentAnswer.value) && currentAnswer.value.length > 0;
+                    }
+                });
+
+                const isCorrectOption = (question, index) => {
+                    if (question.type === 'single') {
+                        return question.correctAnswer === index;
+                    } else {
+                        return Array.isArray(question.correctAnswer) && question.correctAnswer.includes(index);
+                    }
+                };
+
+                const addOption = () => {
+                    newQuestion.value.options.push('');
+                };
+
+                const removeOption = (index) => {
+                    newQuestion.value.options.splice(index, 1);
+                    if (newQuestion.value.type === 'single' && newQuestion.value.correctAnswer >= index) {
+                        newQuestion.value.correctAnswer = Math.max(0, newQuestion.value.correctAnswer - 1);
+                    } else if (newQuestion.value.type === 'multiple') {
+                        newQuestion.value.correctAnswer = newQuestion.value.correctAnswer
+                            .filter(ans => ans !== index)
+                            .map(ans => ans > index ? ans - 1 : ans);
+                    }
+                };
+
+                const addNewQuestion = () => {
+                    if (newQuestion.value.question.trim() && newQuestion.value.options.every(opt => opt.trim())) {
+                        const question = {
+                            ...newQuestion.value,
+                            id: Date.now(),
+                            options: newQuestion.value.options.filter(opt => opt.trim())
+                        };
+                        questions.value.push(question);
+                        
+                        // 重置表单
+                        newQuestion.value = {
+                            type: 'single',
+                            question: '',
+                            options: ['', ''],
+                            correctAnswer: 0,
+                            score: 10
+                        };
+                        showAddModal.value = false;
+                    }
+                };
+
+                const deleteQuestion = (id) => {
+                    const index = questions.value.findIndex(q => q.id === id);
+                    if (index > -1) {
+                        questions.value.splice(index, 1);
+                    }
+                };
+
+                const createNewExam = () => {
+                    if (newExam.value.title.trim() && newExam.value.questions.length > 0) {
+                        const totalScore = newExam.value.questions.reduce((sum, questionId) => {
+                            const question = questions.value.find(q => q.id === questionId);
+                            return sum + (question ? question.score : 0);
+                        }, 0);
+
+                        const exam = {
+                            ...newExam.value,
+                            id: Date.now(),
+                            totalScore,
+                            createdAt: new Date().toISOString()
+                        };
+                        exams.value.push(exam);
+                        
+                        // 重置表单
+                        newExam.value = {
+                            title: '',
+                            description: '',
+                            questions: [],
+                            scoringMode: 'add',
+                            timeLimit: 60,
+                            maxScore: 100
+                        };
+                        showCreateModal.value = false;
+                    }
+                };
+
+                const deleteExam = (id) => {
+                    const index = exams.value.findIndex(e => e.id === id);
+                    if (index > -1) {
+                        exams.value.splice(index, 1);
+                    }
+                };
+
+                const startExam = (exam) => {
+                    currentExam.value = exam;
+                    currentView.value = 'exam';
+                    examStarted.value = false;
+                    examFinished.value = false;
+                };
+
+                const getQuestion = (questionId) => {
+                    return questions.value.find(q => q.id === questionId);
+                };
+
+                const startExamProcess = () => {
+                    examStarted.value = true;
+                    
+                    if (currentExam.value.scoringMode === 'unlimited') {
+                        // 无限制模式初始化
+                        currentScore.value = currentExam.value.maxScore || 100;
+                        currentQuestionIndex.value = 0;
+                        unlimitedQuestions.value = getRandomQuestions();
+                        unlimitedAnswered.value = 0;
+                        // 无限制模式不需要计时器
+                    } else {
+                        // 传统模式初始化
+                        timeRemaining.value = currentExam.value.timeLimit * 60;
+
+                        // 初始化答案
+                        currentExam.value.questions.forEach(questionId => {
+                            const question = getQuestion(questionId);
+                            if (question?.type === 'multiple') {
+                                answers.value[questionId] = [];
+                            } else {
+                                answers.value[questionId] = null;
+                            }
+                        });
+
+                        // 开始计时
+                        timer = setInterval(() => {
+                            timeRemaining.value--;
+                            if (timeRemaining.value <= 0) {
+                                submitExamProcess();
+                            }
+                        }, 1000);
+                    }
+                };
+
+                const submitExamProcess = () => {
+                    if (timer) {
+                        clearInterval(timer);
+                        timer = null;
+                    }
+                    
+                    let totalScore = 0;
+                    let correctCount = 0;
+                    const results = [];
+
+                    currentExam.value.questions.forEach((questionId, index) => {
+                        const question = getQuestion(questionId);
+                        if (!question) return;
+
+                        const userAnswer = answers.value[questionId];
+                        let isCorrect = false;
+
+                        if (question.type === 'single') {
+                            isCorrect = userAnswer === question.correctAnswer;
+                        } else if (question.type === 'multiple') {
+                            isCorrect = Array.isArray(userAnswer) && 
+                                userAnswer.length === question.correctAnswer.length &&
+                                userAnswer.every(ans => question.correctAnswer.includes(ans));
+                        }
+
+                        if (isCorrect) {
+                            correctCount++;
+                            if (currentExam.value.scoringMode === 'add') {
+                                totalScore += question.score;
+                            }
+                        } else if (currentExam.value.scoringMode === 'subtract') {
+                            totalScore -= question.score;
+                        }
+
+                        results.push({
+                            questionId,
+                            userAnswer,
+                            correctAnswer: question.correctAnswer,
+                            isCorrect,
+                            score: isCorrect ? question.score : (currentExam.value.scoringMode === 'subtract' ? -question.score : 0)
+                        });
+                    });
+
+                    // 减分制确保最低分为0
+                    if (currentExam.value.scoringMode === 'subtract') {
+                        totalScore = Math.max(0, currentExam.value.totalScore + totalScore);
+                    }
+
+                    examResult.value = {
+                        id: Date.now(),
+                        examId: currentExam.value.id,
+                        totalScore,
+                        correctCount,
+                        totalQuestions: currentExam.value.questions.length,
+                        results,
+                        submittedAt: new Date().toISOString(),
+                        scoringMode: currentExam.value.scoringMode
+                    };
+
+                    examRecords.value.push(examResult.value);
+                    examFinished.value = true;
+                };
+
+                const formatTime = (seconds) => {
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                };
+
+                onUnmounted(() => {
+                    if (timer) {
+                        clearInterval(timer);
+                    }
+                });
+
+                // 辅助函数
+                const getScoringModeText = (mode) => {
+                    switch(mode) {
+                        case 'add': return '加分制'
+                        case 'subtract': return '减分制'
+                        case 'unlimited': return '无限制'
+                        default: return '未知'
+                    }
+                };
+
+                const getScoringModeClass = (mode) => {
+                    switch(mode) {
+                        case 'add': return 'bg-green-100 text-green-800'
+                        case 'subtract': return 'bg-orange-100 text-orange-800'
+                        case 'unlimited': return 'bg-purple-100 text-purple-800'
+                        default: return 'bg-gray-100 text-gray-800'
+                    }
+                };
+
+                return {
+                    currentView,
+                    showAddModal,
+                    showCreateModal,
+                    questions,
+                    exams,
+                    examRecords,
+                    newQuestion,
+                    newExam,
+                    currentExam,
+                    examStarted,
+                    examFinished,
+                    timeRemaining,
+                    answers,
+                    examResult,
+                    // 无限制模式状态
+                    currentScore,
+                    currentQuestionIndex,
+                    unlimitedQuestions,
+                    unlimitedAnswered,
+                    currentAnswer,
+                    hasValidAnswer,
+                    // 方法
+                    isCorrectOption,
+                    addOption,
+                    removeOption,
+                    addNewQuestion,
+                    deleteQuestion,
+                    createNewExam,
+                    deleteExam,
+                    startExam,
+                    getQuestion,
+                    startExamProcess,
+                    submitExamProcess,
+                    formatTime,
+                    getScoringModeText,
+                    getScoringModeClass,
+                    // 无限制模式方法
+                    getRandomQuestions,
+                    submitUnlimitedAnswer,
+                    selectUnlimitedOption,
+                    submitCurrentAnswer
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

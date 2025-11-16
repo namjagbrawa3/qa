@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/workspace/project/proxy.py", line 48, in <module>
+    with socketserver.TCPServer(("0.0.0.0", PORT), Handler) as httpd:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/openhands/micromamba/envs/openhands/lib/python3.12/socketserver.py", line 457, in __init__
+    self.server_bind()
+  File "/openhands/micromamba/envs/openhands/lib/python3.12/socketserver.py", line 478, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use
