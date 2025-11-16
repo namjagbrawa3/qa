@@ -19,8 +19,16 @@ const PORT = process.env.PORT || 3001;
 
 // 中间件
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'https://work-1-cnhschjrqyafowac.prod-runtime.all-hands.dev', 'https://work-2-cnhschjrqyafowac.prod-runtime.all-hands.dev'],
-  credentials: true
+  origin: [
+    'http://localhost:5173', 
+    'http://localhost:3000', 
+    'http://localhost:12000',  // 添加前端开发服务器端口
+    'https://work-1-cnhschjrqyafowac.prod-runtime.all-hands.dev', 
+    'https://work-2-cnhschjrqyafowac.prod-runtime.all-hands.dev'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: '50mb' }));
