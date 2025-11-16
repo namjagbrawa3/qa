@@ -159,6 +159,35 @@ router.put('/:examId', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// 切换试卷激活状态（仅管理员）
+router.patch('/:examId/toggle-active', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { examId } = req.params;
+    
+    const exam = await Exam.findById(examId);
+    if (!exam) {
+      return res.status(404).json({ error: '试卷不存在' });
+    }
+    
+    const newActiveStatus = !exam.is_active;
+    const success = await Exam.updateById(examId, { is_active: newActiveStatus ? 1 : 0 });
+    
+    if (!success) {
+      return res.status(500).json({ error: '更新试卷状态失败' });
+    }
+    
+    const updatedExam = await Exam.findById(examId);
+    
+    res.json({
+      message: `试卷已${newActiveStatus ? '激活' : '停用'}`,
+      exam: updatedExam
+    });
+  } catch (error) {
+    console.error('Toggle exam active error:', error);
+    res.status(500).json({ error: '切换试卷状态失败' });
+  }
+});
+
 // 删除试卷（仅管理员）
 router.delete('/:examId', authenticateToken, requireAdmin, async (req, res) => {
   try {

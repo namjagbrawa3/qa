@@ -142,6 +142,19 @@ export const useExamStore = defineStore('exam', () => {
     }
   }
 
+  const toggleExamActive = async (examId) => {
+    try {
+      const response = await examAPI.toggleExamActive(examId)
+      const index = exams.value.findIndex(e => e.id === examId)
+      if (index > -1) {
+        exams.value[index] = response.data.exam
+      }
+      return { success: true, exam: response.data.exam }
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || '切换试卷状态失败' }
+    }
+  }
+
   // 考试相关方法
   const startExam = async (examId) => {
     try {
@@ -278,6 +291,7 @@ export const useExamStore = defineStore('exam', () => {
     createExam,
     updateExam,
     deleteExam,
+    toggleExamActive,
     startExam,
     submitExam,
     fetchUserExamRecords,

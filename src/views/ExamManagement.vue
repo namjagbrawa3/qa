@@ -90,27 +90,42 @@
             <span>{{ exam.duration || 60 }} 分钟</span>
           </div>
           
-          <div class="flex space-x-2">
+          <div class="flex flex-col space-y-2">
             <!-- 管理员操作 -->
             <template v-if="authStore.isAdmin">
-              <button
-                @click="editExam(exam)"
-                class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                编辑
-              </button>
-              <button
-                @click="viewExamResults(exam)"
-                class="flex-1 bg-green-50 text-green-700 hover:bg-green-100 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                查看结果
-              </button>
-              <button
-                @click="deleteExam(exam)"
-                class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                删除
-              </button>
+              <div class="flex space-x-2">
+                <button
+                  @click="editExam(exam)"
+                  class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  编辑
+                </button>
+                <button
+                  @click="toggleExamActive(exam)"
+                  :class="[
+                    'flex-1 px-3 py-2 rounded-md text-sm font-medium',
+                    exam.is_active 
+                      ? 'bg-orange-50 text-orange-700 hover:bg-orange-100' 
+                      : 'bg-green-50 text-green-700 hover:bg-green-100'
+                  ]"
+                >
+                  {{ exam.is_active ? '停用' : '激活' }}
+                </button>
+              </div>
+              <div class="flex space-x-2">
+                <button
+                  @click="viewExamResults(exam)"
+                  class="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  查看结果
+                </button>
+                <button
+                  @click="deleteExam(exam)"
+                  class="flex-1 bg-red-50 text-red-700 hover:bg-red-100 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  删除
+                </button>
+              </div>
             </template>
             
             <!-- 用户操作 -->
@@ -342,6 +357,16 @@ const editExam = (exam) => {
   showCreateModal.value = true
 }
 
+const toggleExamActive = async (exam) => {
+  const action = exam.is_active ? '停用' : '激活'
+  if (confirm(`确定要${action}试卷"${exam.title}"吗？`)) {
+    const result = await examStore.toggleExamActive(exam.id)
+    if (!result.success) {
+      alert(result.error || `${action}失败`)
+    }
+  }
+}
+
 const deleteExam = async (exam) => {
   if (confirm(`确定要删除试卷"${exam.title}"吗？此操作不可恢复。`)) {
     const result = await examStore.deleteExam(exam.id)
@@ -363,8 +388,7 @@ const startExam = async (exam) => {
 }
 
 const viewExamResults = (exam) => {
-  // TODO: 实现查看试卷结果功能
-  console.log('查看试卷结果:', exam)
+  router.push(`/exam/${exam.id}/results`)
 }
 
 const viewExamResult = (exam) => {

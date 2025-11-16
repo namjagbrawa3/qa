@@ -303,13 +303,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useExamStore } from '../stores/exam.js'
 import { statsAPI } from '../services/api.js'
 
 const authStore = useAuthStore()
 const examStore = useExamStore()
+const router = useRouter()
 
 const stats = ref({
   questions: {},
@@ -356,7 +358,7 @@ const loadUserStats = async () => {
   }
 }
 
-onMounted(async () => {
+const refreshData = async () => {
   // 加载试卷列表
   await examStore.fetchExams()
   
@@ -364,6 +366,15 @@ onMounted(async () => {
     await loadAdminStats()
   } else {
     await loadUserStats()
+  }
+}
+
+onMounted(refreshData)
+
+// 监听路由变化，当返回Dashboard时刷新数据
+watch(() => router.currentRoute.value.path, (newPath) => {
+  if (newPath === '/' || newPath === '/dashboard') {
+    refreshData()
   }
 })
 </script>

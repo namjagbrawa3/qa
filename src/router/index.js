@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth.js'
 import Dashboard from '../views/Dashboard.vue'
 import QuestionBank from '../views/QuestionBank.vue'
 import ExamManagement from '../views/ExamManagement.vue'
+import ExamResults from '../views/ExamResults.vue'
 import TakeExam from '../views/TakeExam.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
@@ -44,6 +45,12 @@ const routes = [
     name: 'TakeExam',
     component: TakeExam,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/exam/:examId/results',
+    name: 'ExamResults',
+    component: ExamResults,
+    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/users',

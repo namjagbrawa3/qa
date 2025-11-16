@@ -176,6 +176,9 @@ export const examAPI = {
   // 删除试卷
   deleteExam: (examId) => api.delete(`/exams/${examId}`),
   
+  // 切换试卷激活状态
+  toggleExamActive: (examId) => api.patch(`/exams/${examId}/toggle-active`),
+  
   // 开始考试
   startExam: (examId) => api.post(`/exams/${examId}/start`),
   
