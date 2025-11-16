@@ -1,32 +1,52 @@
 <template>
-  <div class="px-4 py-6 sm:px-0">
-    <div v-if="!exam" class="text-center py-12">
-      <h2 class="text-xl font-medium text-gray-900">试卷不存在</h2>
-      <router-link to="/" class="mt-4 inline-block text-blue-600 hover:text-blue-800">返回首页</router-link>
+  <div class="min-h-screen bg-gray-50">
+    <!-- 加载状态 -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-white bg-blue-500">
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          加载中...
+        </div>
+      </div>
     </div>
 
-    <div v-else-if="!examStarted" class="max-w-2xl mx-auto">
-      <div class="bg-white rounded-lg shadow p-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-4">{{ exam.title }}</h1>
-        <p class="text-gray-600 mb-6">{{ exam.description }}</p>
+    <!-- 错误状态 -->
+    <div v-else-if="error" class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+        <h2 class="mt-2 text-xl font-medium text-gray-900">{{ error }}</h2>
+        <router-link to="/exams" class="mt-4 inline-block text-blue-600 hover:text-blue-800">返回考试中心</router-link>
+      </div>
+    </div>
+
+    <!-- 考试准备页面 -->
+    <div v-else-if="!examStarted && exam" class="max-w-2xl mx-auto py-12 px-4">
+      <div class="bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ exam.title }}</h1>
+        <p class="text-gray-600 mb-6">{{ exam.description || '暂无描述' }}</p>
         
         <div class="grid grid-cols-2 gap-4 mb-6">
           <div class="bg-gray-50 p-4 rounded-lg">
             <div class="text-sm text-gray-500">题目数量</div>
-            <div class="text-xl font-semibold text-gray-900">{{ exam.questions.length }} 题</div>
+            <div class="text-xl font-semibold text-gray-900">{{ exam.questions?.length || 0 }} 题</div>
           </div>
           <div class="bg-gray-50 p-4 rounded-lg">
             <div class="text-sm text-gray-500">总分</div>
-            <div class="text-xl font-semibold text-gray-900">{{ exam.totalScore }} 分</div>
+            <div class="text-xl font-semibold text-gray-900">{{ exam.total_score || 0 }} 分</div>
           </div>
           <div class="bg-gray-50 p-4 rounded-lg">
             <div class="text-sm text-gray-500">考试时长</div>
-            <div class="text-xl font-semibold text-gray-900">{{ exam.timeLimit }} 分钟</div>
+            <div class="text-xl font-semibold text-gray-900">{{ exam.duration || 60 }} 分钟</div>
           </div>
           <div class="bg-gray-50 p-4 rounded-lg">
             <div class="text-sm text-gray-500">计分模式</div>
             <div class="text-xl font-semibold text-gray-900">
-              {{ getScoringModeText(exam.scoringMode) }}
+              {{ exam.scoring_mode === 'add' ? '加分制' : '减分制' }}
             </div>
           </div>
         </div>
@@ -34,338 +54,224 @@
         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <h3 class="text-sm font-medium text-yellow-800 mb-2">考试说明：</h3>
           <ul class="text-sm text-yellow-700 space-y-1">
-            <li v-if="exam.scoringMode === 'add'">• 加分制：答对题目获得相应分数，答错不扣分</li>
-            <li v-else-if="exam.scoringMode === 'subtract'">• 减分制：答对题目获得相应分数，答错扣除相应分数</li>
-            <li v-else-if="exam.scoringMode === 'unlimited'">• 无限制模式：从满分{{ exam.maxScore }}分开始，答对不得分，答错扣分，答完题目后继续抽取新题目直到分数为0</li>
-            <li v-if="exam.scoringMode !== 'unlimited'">• 请在规定时间内完成所有题目</li>
-            <li v-else>• 挑战模式：坚持到最后一刻！</li>
+            <li v-if="exam.scoring_mode === 'add'">• 加分制：答对题目获得相应分数，答错不扣分</li>
+            <li v-else>• 减分制：答对题目获得相应分数，答错扣除相应分数</li>
+            <li>• 请在规定时间内完成所有题目</li>
             <li>• 提交后无法修改答案</li>
+            <li>• 每份试卷只能参加一次</li>
           </ul>
         </div>
 
         <button 
           @click="startExam"
-          class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          :disabled="isStarting"
+          class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          开始考试
+          {{ isStarting ? '准备中...' : '开始考试' }}
         </button>
       </div>
     </div>
 
-    <div v-else-if="!examFinished" class="max-w-4xl mx-auto">
-      <!-- 无限制模式 -->
-      <div v-if="unlimitedMode" class="space-y-6">
-        <!-- 状态栏 -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl font-semibold text-gray-900">{{ exam.title }} - 挑战模式</h1>
-            <div class="flex items-center space-x-4">
-              <div class="text-lg font-bold" :class="currentScore > 20 ? 'text-green-600' : currentScore > 10 ? 'text-yellow-600' : 'text-red-600'">
-                剩余分数: {{ currentScore }}
-              </div>
-            </div>
+    <!-- 考试进行中 -->
+    <div v-else-if="examStarted && exam" class="max-w-4xl mx-auto py-6 px-4">
+      <!-- 考试头部信息 -->
+      <div class="bg-white rounded-lg shadow p-4 mb-6 sticky top-0 z-10">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-xl font-semibold text-gray-900">{{ exam.title }}</h1>
+            <p class="text-sm text-gray-500">
+              第 {{ currentQuestionIndex + 1 }} 题 / 共 {{ exam.questions.length }} 题
+            </p>
           </div>
-          
-          <div class="grid grid-cols-3 gap-4 text-center">
-            <div class="bg-blue-50 p-3 rounded-lg">
-              <div class="text-sm text-gray-500">已答题数</div>
-              <div class="text-xl font-semibold text-blue-600">{{ unlimitedResults.length }}</div>
+          <div class="text-right">
+            <div class="text-2xl font-bold" :class="timeRemaining < 300 ? 'text-red-600' : 'text-gray-900'">
+              {{ formatTime(timeRemaining) }}
             </div>
-            <div class="bg-green-50 p-3 rounded-lg">
-              <div class="text-sm text-gray-500">正确率</div>
-              <div class="text-xl font-semibold text-green-600">
-                {{ unlimitedResults.length > 0 ? Math.round((unlimitedResults.filter(r => r.isCorrect).length / unlimitedResults.length) * 100) : 0 }}%
-              </div>
-            </div>
-            <div class="bg-purple-50 p-3 rounded-lg">
-              <div class="text-sm text-gray-500">初始分数</div>
-              <div class="text-xl font-semibold text-purple-600">{{ exam.maxScore }}</div>
-            </div>
+            <p class="text-sm text-gray-500">剩余时间</p>
           </div>
         </div>
-
-        <!-- 当前题目 -->
-        <div class="bg-white rounded-lg shadow p-6">
-          <div v-if="getCurrentQuestion()" class="space-y-6">
-            <div class="flex items-start">
-              <span class="flex-shrink-0 w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-lg font-medium mr-4">
-                {{ unlimitedResults.length + 1 }}
-              </span>
-              <div class="flex-1">
-                <h3 class="text-xl font-medium text-gray-900 mb-4">
-                  {{ getCurrentQuestion()?.question }}
-                  <span class="ml-2 text-sm text-red-500 font-medium">(答错扣{{ getCurrentQuestion()?.score }}分)</span>
-                </h3>
-                
-                <div class="space-y-3">
-                  <div 
-                    v-for="(option, optionIndex) in getCurrentQuestion()?.options" 
-                    :key="optionIndex"
-                    class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-                    @click="getCurrentQuestion()?.type === 'single' ? currentAnswer = optionIndex : null"
-                  >
-                    <input 
-                      v-if="getCurrentQuestion()?.type === 'single'"
-                      v-model="currentAnswer"
-                      :value="optionIndex"
-                      type="radio" 
-                      :name="`current-question`"
-                      class="mr-3"
-                    />
-                    <input 
-                      v-else
-                      v-model="currentAnswer"
-                      :value="optionIndex"
-                      type="checkbox" 
-                      class="mr-3"
-                    />
-                    <label class="text-gray-700 cursor-pointer flex-1">
-                      {{ String.fromCharCode(65 + optionIndex) }}. {{ option }}
-                    </label>
-                  </div>
-                </div>
-                
-                <div class="mt-6 flex justify-center">
-                  <button 
-                    @click="submitUnlimitedAnswer"
-                    :disabled="currentAnswer === null || (Array.isArray(currentAnswer) && currentAnswer.length === 0)"
-                    class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                  >
-                    提交答案
-                  </button>
-                </div>
-              </div>
-            </div>
+        
+        <!-- 进度条 -->
+        <div class="mt-4">
+          <div class="bg-gray-200 rounded-full h-2">
+            <div 
+              class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              :style="{ width: `${((currentQuestionIndex + 1) / exam.questions.length) * 100}%` }"
+            ></div>
           </div>
         </div>
       </div>
 
-      <!-- 普通模式 -->
-      <div v-else>
-        <div class="bg-white rounded-lg shadow mb-6">
-          <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h1 class="text-xl font-semibold text-gray-900">{{ exam.title }}</h1>
-            <div class="flex items-center space-x-4">
-              <div class="text-sm text-gray-600">
-                剩余时间: <span class="font-medium text-red-600">{{ formatTime(timeRemaining) }}</span>
-              </div>
-              <button 
-                @click="submitExam"
-                class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700"
-              >
-                提交试卷
-              </button>
-            </div>
-          </div>
+      <!-- 题目内容 -->
+      <div v-if="currentQuestion" class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex items-center space-x-2 mb-4">
+          <span :class="[
+            'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
+            currentQuestion.type === 'single' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+          ]">
+            {{ currentQuestion.type === 'single' ? '单选题' : '多选题' }}
+          </span>
+          <span class="text-sm text-gray-500">{{ currentQuestion.score }}分</span>
         </div>
-
-        <div class="bg-white rounded-lg shadow p-6">
-          <div v-for="(questionId, index) in exam.questions" :key="questionId" class="mb-8 last:mb-0">
-            <div class="border-b border-gray-200 pb-6 last:border-b-0">
-              <div class="flex items-start mb-4">
-                <span class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium mr-4">
-                  {{ index + 1 }}
-                </span>
-                <div class="flex-1">
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">
-                    {{ getQuestion(questionId)?.question }}
-                    <span class="ml-2 text-sm text-gray-500">({{ getQuestion(questionId)?.score }}分)</span>
-                  </h3>
-                  
-                  <div class="space-y-2">
-                    <div 
-                      v-for="(option, optionIndex) in getQuestion(questionId)?.options" 
-                      :key="optionIndex"
-                      class="flex items-center"
-                    >
-                      <input 
-                        v-if="getQuestion(questionId)?.type === 'single'"
-                        v-model="answers[questionId]"
-                        :value="optionIndex"
-                        type="radio" 
-                        :name="`question-${questionId}`"
-                        class="mr-3"
-                      />
-                      <input 
-                        v-else
-                        v-model="answers[questionId]"
-                        :value="optionIndex"
-                        type="checkbox" 
-                        class="mr-3"
-                      />
-                      <label class="text-gray-700">
-                        {{ String.fromCharCode(65 + optionIndex) }}. {{ option }}
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        
+        <h2 class="text-lg font-medium text-gray-900 mb-4">{{ currentQuestion.question }}</h2>
+        
+        <!-- 多媒体内容 -->
+        <div v-if="currentQuestion.image_url || currentQuestion.audio_url || currentQuestion.video_url" class="mb-6 space-y-4">
+          <img v-if="currentQuestion.image_url" :src="getMediaUrl(currentQuestion.image_url)" alt="题目图片" class="max-w-md rounded-lg" />
+          <audio v-if="currentQuestion.audio_url" :src="getMediaUrl(currentQuestion.audio_url)" controls class="w-full max-w-md"></audio>
+          <video v-if="currentQuestion.video_url" :src="getMediaUrl(currentQuestion.video_url)" controls class="w-full max-w-md"></video>
+        </div>
+        
+        <!-- 选项 -->
+        <div class="space-y-3">
+          <label
+            v-for="(option, index) in currentQuestion.options"
+            :key="index"
+            class="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+            :class="{ 'bg-blue-50 border-blue-300': isOptionSelected(index) }"
+          >
+            <input
+              v-if="currentQuestion.type === 'single'"
+              type="radio"
+              :name="`question-${currentQuestion.id}`"
+              :value="index"
+              v-model="answers[currentQuestion.id]"
+              class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+            />
+            <input
+              v-else
+              type="checkbox"
+              :value="index"
+              v-model="answers[currentQuestion.id]"
+              class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <div class="flex-1">
+              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-medium mr-3">
+                {{ String.fromCharCode(65 + index) }}
+              </span>
+              <span class="text-gray-900">{{ option }}</span>
             </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 导航按钮 -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex justify-between items-center">
+          <button
+            @click="previousQuestion"
+            :disabled="currentQuestionIndex === 0"
+            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            上一题
+          </button>
+          
+          <div class="flex space-x-2">
+            <button
+              v-if="currentQuestionIndex < exam.questions.length - 1"
+              @click="nextQuestion"
+              class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+            >
+              下一题
+            </button>
+            <button
+              v-else
+              @click="submitExam"
+              :disabled="isSubmitting"
+              class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ isSubmitting ? '提交中...' : '提交试卷' }}
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-else class="max-w-2xl mx-auto">
-      <!-- 考试结果 -->
-      <div class="bg-white rounded-lg shadow p-8">
-        <div class="text-center mb-8">
-          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">考试完成！</h2>
-          <p class="text-gray-600">您的考试结果如下</p>
+    <!-- 考试结果 -->
+    <div v-else-if="examResult" class="max-w-2xl mx-auto py-12 px-4">
+      <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+        <div class="mb-6">
+          <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
         </div>
-
-        <div v-if="examResult.scoringMode === 'unlimited'" class="grid grid-cols-3 gap-4 mb-8">
-          <div class="bg-red-50 p-4 rounded-lg text-center">
-            <div class="text-2xl font-bold text-red-600">{{ examResult.totalScore }}</div>
-            <div class="text-sm text-red-600">剩余分数</div>
+        
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">考试完成！</h1>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="text-sm text-gray-500">得分</div>
+            <div class="text-2xl font-bold text-gray-900">{{ examResult.total_score }} 分</div>
           </div>
-          <div class="bg-blue-50 p-4 rounded-lg text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ examResult.totalQuestions }}</div>
-            <div class="text-sm text-blue-600">总答题数</div>
-          </div>
-          <div class="bg-green-50 p-4 rounded-lg text-center">
-            <div class="text-2xl font-bold text-green-600">{{ Math.round((examResult.correctCount / examResult.totalQuestions) * 100) }}%</div>
-            <div class="text-sm text-green-600">正确率</div>
-          </div>
-        </div>
-        <div v-else class="grid grid-cols-2 gap-4 mb-8">
-          <div class="bg-blue-50 p-4 rounded-lg text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ examResult.totalScore }}</div>
-            <div class="text-sm text-blue-600">总得分</div>
-          </div>
-          <div class="bg-green-50 p-4 rounded-lg text-center">
-            <div class="text-2xl font-bold text-green-600">{{ examResult.correctCount }}/{{ examResult.totalQuestions }}</div>
-            <div class="text-sm text-green-600">正确题数</div>
-          </div>
-        </div>
-
-        <div class="space-y-4 mb-8">
-          <h3 class="text-lg font-medium text-gray-900">答题详情</h3>
-          <div v-for="(result, index) in examResult.results" :key="result.questionId" class="border border-gray-200 rounded-lg p-4">
-            <div class="flex items-start justify-between mb-2">
-              <span class="text-sm font-medium text-gray-900">第 {{ index + 1 }} 题</span>
-              <span class="text-sm font-medium" :class="result.isCorrect ? 'text-green-600' : 'text-red-600'">
-                {{ result.isCorrect ? '正确' : '错误' }} ({{ result.score > 0 ? '+' : '' }}{{ result.score }}分)
-              </span>
-            </div>
-            <p class="text-sm text-gray-700 mb-2">{{ getQuestion(result.questionId)?.question }}</p>
-            <div class="text-xs text-gray-500">
-              <div>您的答案: {{ formatAnswer(result.userAnswer, result.questionId) }}</div>
-              <div>正确答案: {{ formatAnswer(result.correctAnswer, result.questionId) }}</div>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="text-sm text-gray-500">正确率</div>
+            <div class="text-2xl font-bold text-gray-900">
+              {{ Math.round((examResult.correct_count / examResult.total_questions) * 100) }}%
             </div>
           </div>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="text-sm text-gray-500">正确题数</div>
+            <div class="text-2xl font-bold text-gray-900">{{ examResult.correct_count }} / {{ examResult.total_questions }}</div>
+          </div>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="text-sm text-gray-500">用时</div>
+            <div class="text-2xl font-bold text-gray-900">{{ formatDuration(examResult.duration_seconds) }}</div>
+          </div>
         </div>
-
-        <div class="flex space-x-4">
-          <router-link 
-            to="/"
-            class="flex-1 bg-blue-600 text-white text-center py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            返回首页
-          </router-link>
-          <router-link 
-            to="/exams"
-            class="flex-1 border border-blue-600 text-blue-600 text-center py-3 px-4 rounded-lg font-medium hover:bg-blue-50 transition-colors"
-          >
-            查看更多试卷
-          </router-link>
-        </div>
+        
+        <router-link
+          to="/exams"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+        >
+          返回考试中心
+        </router-link>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { useExamStore } from '../stores/exam'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useExamStore } from '../stores/exam.js'
 
 const route = useRoute()
+const router = useRouter()
 const examStore = useExamStore()
-const { questions, exams } = storeToRefs(examStore)
-const { submitExam: submitExamToStore } = examStore
 
-const examId = parseInt(route.params.id)
-const exam = computed(() => exams.value.find(e => e.id === examId))
-
+const isLoading = ref(true)
+const error = ref('')
+const exam = ref(null)
 const examStarted = ref(false)
-const examFinished = ref(false)
-const timeRemaining = ref(0)
-const answers = ref({})
-const examResult = ref(null)
-let timer = null
-
-// 无限制模式专用状态
-const unlimitedMode = computed(() => exam.value?.scoringMode === 'unlimited')
-const currentScore = ref(0)
+const isStarting = ref(false)
+const isSubmitting = ref(false)
 const currentQuestionIndex = ref(0)
-const currentQuestions = ref([])
-const usedQuestionIds = ref([])
-const unlimitedResults = ref([])
-const currentAnswer = ref(null)
+const answers = reactive({})
+const startTime = ref(null)
+const timeRemaining = ref(0)
+const timer = ref(null)
+const examResult = ref(null)
 
-const getQuestion = (questionId) => {
-  return questions.value.find(q => q.id === questionId)
-}
+const currentQuestion = computed(() => {
+  if (!exam.value || !exam.value.questions) return null
+  return exam.value.questions[currentQuestionIndex.value]
+})
 
-const getScoringModeText = (mode) => {
-  switch(mode) {
-    case 'add': return '加分制'
-    case 'subtract': return '减分制'
-    case 'unlimited': return '无限制'
-    default: return '未知'
-  }
-}
-
-const startExam = () => {
-  examStarted.value = true
+const isOptionSelected = (optionIndex) => {
+  if (!currentQuestion.value) return false
   
-  if (unlimitedMode.value) {
-    // 无限制模式初始化
-    currentScore.value = exam.value.maxScore || 100
-    currentQuestionIndex.value = 0
-    currentQuestions.value = [...exam.value.questions]
-    usedQuestionIds.value = []
-    unlimitedResults.value = []
-    initCurrentQuestion()
+  const answer = answers[currentQuestion.value.id]
+  if (currentQuestion.value.type === 'single') {
+    return answer === optionIndex
   } else {
-    // 普通模式初始化
-    timeRemaining.value = exam.value.timeLimit * 60 // 转换为秒
-    
-    // 初始化答案
-    exam.value.questions.forEach(questionId => {
-      const question = getQuestion(questionId)
-      if (question?.type === 'multiple') {
-        answers.value[questionId] = []
-      } else {
-        answers.value[questionId] = null
-      }
-    })
-    
-    // 开始计时
-    timer = setInterval(() => {
-      timeRemaining.value--
-      if (timeRemaining.value <= 0) {
-        submitExam()
-      }
-    }, 1000)
+    return Array.isArray(answer) && answer.includes(optionIndex)
   }
 }
 
-const submitExam = () => {
-  if (timer) {
-    clearInterval(timer)
-    timer = null
-  }
-  
-  examResult.value = submitExamToStore(examId, answers.value, exam.value.scoringMode)
-  examFinished.value = true
+const getMediaUrl = (url) => {
+  if (!url) return null
+  return url.startsWith('http') ? url : `http://localhost:3001${url}`
 }
 
 const formatTime = (seconds) => {
@@ -374,95 +280,129 @@ const formatTime = (seconds) => {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
 }
 
-const formatAnswer = (answer, questionId) => {
-  const question = getQuestion(questionId)
-  if (!question) return ''
+const formatDuration = (seconds) => {
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  if (minutes > 0) {
+    return `${minutes}分${remainingSeconds}秒`
+  }
+  return `${remainingSeconds}秒`
+}
+
+const startTimer = () => {
+  if (timer.value) clearInterval(timer.value)
   
-  if (question.type === 'single') {
-    return answer !== null ? `${String.fromCharCode(65 + answer)}. ${question.options[answer]}` : '未作答'
-  } else {
-    if (Array.isArray(answer) && answer.length > 0) {
-      return answer.map(idx => `${String.fromCharCode(65 + idx)}. ${question.options[idx]}`).join(', ')
+  timer.value = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime.value) / 1000)
+    const duration = (exam.value.duration || 60) * 60
+    timeRemaining.value = Math.max(0, duration - elapsed)
+    
+    if (timeRemaining.value === 0) {
+      submitExam()
     }
-    return '未作答'
+  }, 1000)
+}
+
+const stopTimer = () => {
+  if (timer.value) {
+    clearInterval(timer.value)
+    timer.value = null
   }
 }
 
-// 无限制模式相关函数
-const initCurrentQuestion = () => {
-  const question = getQuestion(getCurrentQuestionId())
-  if (question?.type === 'multiple') {
-    currentAnswer.value = []
-  } else {
-    currentAnswer.value = null
+const loadExam = async () => {
+  try {
+    const examId = route.params.id
+    const response = await examStore.examAPI.getExam(examId)
+    exam.value = response.data.exam
+    
+    if (response.data.hasUserTaken) {
+      error.value = '您已经参加过这个考试'
+      return
+    }
+    
+    // 初始化答案对象
+    if (exam.value.questions) {
+      exam.value.questions.forEach(question => {
+        if (question.type === 'single') {
+          answers[question.id] = null
+        } else {
+          answers[question.id] = []
+        }
+      })
+    }
+  } catch (err) {
+    console.error('加载考试失败:', err)
+    error.value = err.response?.data?.error || '加载考试失败'
+  } finally {
+    isLoading.value = false
   }
 }
 
-const getCurrentQuestionId = () => {
-  return currentQuestions.value[currentQuestionIndex.value]
+const startExam = async () => {
+  isStarting.value = true
+  
+  try {
+    const result = await examStore.startExam(exam.value.id)
+    if (result.success) {
+      examStarted.value = true
+      startTime.value = Date.now()
+      timeRemaining.value = (exam.value.duration || 60) * 60
+      startTimer()
+    } else {
+      alert(result.error || '开始考试失败')
+    }
+  } catch (error) {
+    console.error('开始考试失败:', error)
+    alert('开始考试失败，请重试')
+  } finally {
+    isStarting.value = false
+  }
 }
 
-const getCurrentQuestion = () => {
-  return getQuestion(getCurrentQuestionId())
+const previousQuestion = () => {
+  if (currentQuestionIndex.value > 0) {
+    currentQuestionIndex.value--
+  }
 }
 
-const submitUnlimitedAnswer = () => {
-  const questionId = getCurrentQuestionId()
-  const result = examStore.submitUnlimitedAnswer(questionId, currentAnswer.value, currentScore.value)
-  
-  // 记录结果
-  unlimitedResults.value.push({
-    questionId,
-    userAnswer: currentAnswer.value,
-    correctAnswer: result.question.correctAnswer,
-    isCorrect: result.isCorrect,
-    scoreChange: result.scoreChange,
-    question: result.question
-  })
-  
-  // 更新分数
-  currentScore.value = result.newScore
-  usedQuestionIds.value.push(questionId)
-  
-  // 检查游戏是否结束
-  if (currentScore.value <= 0) {
-    finishUnlimitedExam()
+const nextQuestion = () => {
+  if (currentQuestionIndex.value < exam.value.questions.length - 1) {
+    currentQuestionIndex.value++
+  }
+}
+
+const submitExam = async () => {
+  if (!confirm('确定要提交试卷吗？提交后无法修改。')) {
     return
   }
   
-  // 移动到下一题
-  currentQuestionIndex.value++
+  isSubmitting.value = true
+  stopTimer()
   
-  // 如果当前试卷题目答完了，获取新题目
-  if (currentQuestionIndex.value >= currentQuestions.value.length) {
-    const newQuestions = examStore.getRandomQuestions(usedQuestionIds.value, 5)
-    if (newQuestions.length === 0) {
-      // 没有更多题目了，结束考试
-      finishUnlimitedExam()
-      return
+  try {
+    const result = await examStore.submitExam(exam.value.id, answers)
+    if (result.success) {
+      examResult.value = result.result
+      examStarted.value = false
+    } else {
+      alert(result.error || '提交失败')
+      startTimer() // 重新开始计时
     }
-    currentQuestions.value = newQuestions.map(q => q.id)
-    currentQuestionIndex.value = 0
+  } catch (error) {
+    console.error('提交考试失败:', error)
+    alert('提交失败，请重试')
+    startTimer() // 重新开始计时
+  } finally {
+    isSubmitting.value = false
   }
-  
-  initCurrentQuestion()
 }
 
-const finishUnlimitedExam = () => {
-  examResult.value = {
-    totalScore: currentScore.value,
-    correctCount: unlimitedResults.value.filter(r => r.isCorrect).length,
-    totalQuestions: unlimitedResults.value.length,
-    results: unlimitedResults.value,
-    scoringMode: 'unlimited',
-    maxScore: exam.value.maxScore || 100
-  }
-  examFinished.value = true
-}
+onMounted(() => {
+  loadExam()
+})
 
 onUnmounted(() => {
-  if (timer) {
-    clearInterval(timer)
-  }
+  stopTimer()
 })
 </script>

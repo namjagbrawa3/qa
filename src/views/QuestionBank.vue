@@ -1,174 +1,314 @@
 <template>
-  <div class="px-4 py-6 sm:px-0">
+  <div class="px-4 sm:px-6 lg:px-8">
+    <!-- 页面标题 -->
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
         <h1 class="text-2xl font-semibold text-gray-900">题库管理</h1>
-        <p class="mt-2 text-sm text-gray-700">管理考试题目，支持单选题和多选题</p>
+        <p class="mt-2 text-sm text-gray-700">
+          管理系统中的所有题目，支持单选题、多选题，以及图片、音频、视频等多媒体内容。
+        </p>
       </div>
       <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
         <button
-            @click="showAddModal = true"
-            class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+          @click="openModal()"
+          type="button"
+          class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
         >
+          <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
           添加题目
         </button>
       </div>
     </div>
 
+    <!-- 搜索栏 -->
+    <div class="mt-6">
+      <div class="max-w-lg">
+        <label for="search" class="sr-only">搜索题目</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            id="search"
+            v-model="searchQuery"
+            type="search"
+            placeholder="搜索题目内容..."
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+        </div>
+      </div>
+    </div>
+
     <!-- 题目列表 -->
-    <div class="mt-8 flow-root">
-      <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-          <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-            <table class="min-w-full divide-y divide-gray-300">
-              <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">题目</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">类型</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">分值</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">操作</th>
-              </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="question in questions" :key="question.id">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">{{ question.question }}</div>
-                  <div class="text-sm text-gray-500 mt-1">
-                    <div v-for="(option, index) in question.options" :key="index" class="flex items-center">
-                      <span class="mr-2">{{ String.fromCharCode(65 + index) }}.</span>
-                      <span>{{ option }}</span>
-                      <span v-if="isCorrectOption(question, index)" class="ml-2 text-green-600">✓</span>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                          :class="question.type === 'single' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'">
-                      {{ question.type === 'single' ? '单选题' : '多选题' }}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ question.score }} 分
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                      @click="deleteQuestion(question.id)"
-                      class="text-red-600 hover:text-red-900"
-                  >
-                    删除
-                  </button>
-                </td>
-              </tr>
-              </tbody>
-            </table>
+    <div class="mt-8 flex flex-col">
+      <div v-if="examStore.questionsLoading" class="text-center py-12">
+        <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-white bg-blue-500">
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          加载中...
+        </div>
+      </div>
+
+      <div v-else-if="filteredQuestions.length === 0" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">暂无题目</h3>
+        <p class="mt-1 text-sm text-gray-500">开始创建第一个题目吧。</p>
+        <div class="mt-6">
+          <button
+            @click="openModal()"
+            type="button"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            添加题目
+          </button>
+        </div>
+      </div>
+
+      <div v-else class="space-y-6">
+        <div
+          v-for="question in filteredQuestions"
+          :key="question.id"
+          class="bg-white shadow rounded-lg p-6"
+        >
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center space-x-2 mb-3">
+                <span :class="[
+                  'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
+                  question.type === 'single' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                ]">
+                  {{ question.type === 'single' ? '单选题' : '多选题' }}
+                </span>
+                <span class="text-sm text-gray-500">{{ question.score }}分</span>
+              </div>
+              
+              <h3 class="text-lg font-medium text-gray-900 mb-4">{{ question.question }}</h3>
+              
+              <!-- 多媒体内容 -->
+              <div v-if="question.image_url || question.audio_url || question.video_url" class="mb-4 space-y-2">
+                <img v-if="question.image_url" :src="getMediaUrl(question.image_url)" alt="题目图片" class="max-w-xs rounded-lg" />
+                <audio v-if="question.audio_url" :src="getMediaUrl(question.audio_url)" controls class="w-full max-w-md"></audio>
+                <video v-if="question.video_url" :src="getMediaUrl(question.video_url)" controls class="w-full max-w-md"></video>
+              </div>
+              
+              <div class="space-y-2">
+                <div
+                  v-for="(option, index) in question.options"
+                  :key="index"
+                  class="flex items-center space-x-2"
+                >
+                  <span :class="[
+                    'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium',
+                    isCorrectOption(question, index) 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-gray-100 text-gray-600'
+                  ]">
+                    {{ String.fromCharCode(65 + index) }}
+                  </span>
+                  <span :class="[
+                    'text-sm',
+                    isCorrectOption(question, index) ? 'text-green-800 font-medium' : 'text-gray-700'
+                  ]">
+                    {{ option }}
+                  </span>
+                  <svg v-if="isCorrectOption(question, index)" class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 ml-4">
+              <button
+                @click="openModal(question)"
+                class="text-blue-600 hover:text-blue-900 text-sm font-medium"
+              >
+                编辑
+              </button>
+              <button
+                @click="deleteQuestion(question)"
+                class="text-red-600 hover:text-red-900 text-sm font-medium"
+              >
+                删除
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 添加题目模态框 -->
-    <div v-if="showAddModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">添加新题目</h3>
-
-          <form @submit.prevent="addNewQuestion">
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">题目类型</label>
-              <select v-model="newQuestion.type" class="w-full border border-gray-300 rounded-md px-3 py-2">
-                <option value="single">单选题</option>
-                <option value="multiple">多选题</option>
-              </select>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">题目内容</label>
-              <textarea
-                  v-model="newQuestion.question"
-                  rows="3"
-                  class="w-full border border-gray-300 rounded-md px-3 py-2"
-                  required
-              ></textarea>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">选项</label>
-              <div v-for="(option, index) in newQuestion.options" :key="index" class="flex items-center mb-2">
-                <span class="mr-2 w-6">{{ String.fromCharCode(65 + index) }}.</span>
-                <input
-                    v-model="newQuestion.options[index]"
-                    type="text"
-                    class="flex-1 border border-gray-300 rounded-md px-3 py-2 mr-2"
-                    required
-                />
-                <button
-                    v-if="newQuestion.options.length > 2"
-                    @click="removeOption(index)"
-                    type="button"
-                    class="text-red-600 hover:text-red-800"
-                >
-                  删除
-                </button>
+    <!-- 添加/编辑题目模态框 -->
+    <div v-if="showModal" class="fixed inset-0 z-10 overflow-y-auto">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeModal"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+          <form @submit.prevent="handleSubmit">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div class="sm:flex sm:items-start">
+                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                  <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    {{ editingQuestion ? '编辑题目' : '添加题目' }}
+                  </h3>
+                  
+                  <div class="space-y-4">
+                    <!-- 题目类型 -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">题目类型</label>
+                      <select
+                        v-model="form.type"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      >
+                        <option value="single">单选题</option>
+                        <option value="multiple">多选题</option>
+                      </select>
+                    </div>
+                    
+                    <!-- 题目内容 -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">题目内容</label>
+                      <textarea
+                        v-model="form.question"
+                        rows="3"
+                        required
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        placeholder="请输入题目内容..."
+                      ></textarea>
+                    </div>
+                    
+                    <!-- 多媒体文件上传 -->
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700">图片</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          @change="handleFileUpload($event, 'image')"
+                          class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700">音频</label>
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          @change="handleFileUpload($event, 'audio')"
+                          class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700">视频</label>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          @change="handleFileUpload($event, 'video')"
+                          class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                      </div>
+                    </div>
+                    
+                    <!-- 选项 -->
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-gray-700">选项</label>
+                        <button
+                          type="button"
+                          @click="addOption"
+                          class="text-sm text-blue-600 hover:text-blue-500"
+                        >
+                          + 添加选项
+                        </button>
+                      </div>
+                      
+                      <div class="space-y-2">
+                        <div
+                          v-for="(option, index) in form.options"
+                          :key="index"
+                          class="flex items-center space-x-2"
+                        >
+                          <button
+                            type="button"
+                            @click="toggleCorrectAnswer(index)"
+                            :class="[
+                              'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium border-2',
+                              isCorrectAnswer(index) 
+                                ? 'bg-green-100 text-green-800 border-green-300' 
+                                : 'bg-gray-50 text-gray-600 border-gray-300 hover:border-gray-400'
+                            ]"
+                          >
+                            {{ String.fromCharCode(65 + index) }}
+                          </button>
+                          
+                          <input
+                            v-model="form.options[index]"
+                            type="text"
+                            required
+                            class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            :placeholder="`选项 ${String.fromCharCode(65 + index)}`"
+                          />
+                          
+                          <button
+                            v-if="form.options.length > 2"
+                            type="button"
+                            @click="removeOption(index)"
+                            class="text-red-600 hover:text-red-800"
+                          >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <p class="mt-2 text-sm text-gray-500">
+                        点击选项前的字母来设置正确答案
+                      </p>
+                    </div>
+                    
+                    <!-- 分值 -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">分值</label>
+                      <input
+                        v-model.number="form.score"
+                        type="number"
+                        min="1"
+                        max="100"
+                        required
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
+            </div>
+            
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
               <button
-                  @click="addOption"
-                  type="button"
-                  class="text-blue-600 hover:text-blue-800 text-sm"
+                type="submit"
+                :disabled="isLoading"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
               >
-                + 添加选项
+                {{ isLoading ? '保存中...' : (editingQuestion ? '更新' : '添加') }}
               </button>
-            </div>
-
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">正确答案</label>
-              <div v-if="newQuestion.type === 'single'">
-                <div v-for="(option, index) in newQuestion.options" :key="index" class="flex items-center mb-1">
-                  <input
-                      v-model="newQuestion.correctAnswer"
-                      :value="index"
-                      type="radio"
-                      class="mr-2"
-                  />
-                  <span>{{ String.fromCharCode(65 + index) }}. {{ option }}</span>
-                </div>
-              </div>
-              <div v-else>
-                <div v-for="(option, index) in newQuestion.options" :key="index" class="flex items-center mb-1">
-                  <input
-                      v-model="newQuestion.correctAnswer"
-                      :value="index"
-                      type="checkbox"
-                      class="mr-2"
-                  />
-                  <span>{{ String.fromCharCode(65 + index) }}. {{ option }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">分值</label>
-              <input
-                  v-model.number="newQuestion.score"
-                  type="number"
-                  min="1"
-                  class="w-full border border-gray-300 rounded-md px-3 py-2"
-                  required
-              />
-            </div>
-
-            <div class="flex justify-end space-x-3">
               <button
-                  @click="showAddModal = false"
-                  type="button"
-                  class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                type="button"
+                @click="closeModal"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
               >
                 取消
-              </button>
-              <button
-                  type="submit"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
-              >
-                添加题目
               </button>
             </div>
           </form>
@@ -179,74 +319,194 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useExamStore } from '../stores/exam'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useExamStore } from '../stores/exam.js'
+import { useAuthStore } from '../stores/auth.js'
 
 const examStore = useExamStore()
-const { questions } = storeToRefs(examStore)
-const { addQuestion, deleteQuestion } = examStore
+const authStore = useAuthStore()
 
-const showAddModal = ref(false)
-const newQuestion = ref({
+const showModal = ref(false)
+const editingQuestion = ref(null)
+const searchQuery = ref('')
+const isLoading = ref(false)
+
+const form = reactive({
   type: 'single',
   question: '',
-  options: ['', ''],
-  correctAnswer: 0,
-  score: 10
+  options: ['', '', '', ''],
+  correctAnswer: null,
+  score: 10,
+  image: null,
+  audio: null,
+  video: null
 })
 
-// 修复：监听题目类型变化，动态初始化 correctAnswer
-watch(() => newQuestion.value.type, (newType) => {
-  if (newType === 'single') {
-    newQuestion.value.correctAnswer = 0
-  } else {
-    newQuestion.value.correctAnswer = Array.isArray(newQuestion.value.correctAnswer)
-        ? newQuestion.value.correctAnswer
-        : []
-  }
+const filteredQuestions = computed(() => {
+  if (!searchQuery.value) return examStore.questions
+  return examStore.questions.filter(q => 
+    q.question.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
 })
+
+const isCorrectAnswer = (index) => {
+  if (form.type === 'single') {
+    return form.correctAnswer === index
+  } else {
+    return Array.isArray(form.correctAnswer) && form.correctAnswer.includes(index)
+  }
+}
 
 const isCorrectOption = (question, index) => {
   if (question.type === 'single') {
-    return question.correctAnswer === index
+    return question.correct_answer === index
   } else {
-    return Array.isArray(question.correctAnswer) && question.correctAnswer.includes(index)
+    return Array.isArray(question.correct_answer) && question.correct_answer.includes(index)
   }
+}
+
+const resetForm = () => {
+  form.type = 'single'
+  form.question = ''
+  form.options = ['', '', '', '']
+  form.correctAnswer = null
+  form.score = 10
+  form.image = null
+  form.audio = null
+  form.video = null
+}
+
+const openModal = (question = null) => {
+  editingQuestion.value = question
+  if (question) {
+    form.type = question.type
+    form.question = question.question
+    form.options = [...question.options]
+    form.correctAnswer = question.correct_answer
+    form.score = question.score
+  } else {
+    resetForm()
+  }
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  editingQuestion.value = null
+  resetForm()
 }
 
 const addOption = () => {
-  newQuestion.value.options.push('')
+  form.options.push('')
 }
 
 const removeOption = (index) => {
-  newQuestion.value.options.splice(index, 1)
-  // 调整正确答案
-  if (newQuestion.value.type === 'single' && newQuestion.value.correctAnswer >= index) {
-    newQuestion.value.correctAnswer = Math.max(0, newQuestion.value.correctAnswer - 1)
-  } else if (newQuestion.value.type === 'multiple') {
-    newQuestion.value.correctAnswer = newQuestion.value.correctAnswer
-        .filter(ans => ans !== index)
+  if (form.options.length > 2) {
+    form.options.splice(index, 1)
+    // 调整正确答案
+    if (form.type === 'single' && form.correctAnswer >= index) {
+      form.correctAnswer = form.correctAnswer > index ? form.correctAnswer - 1 : null
+    } else if (form.type === 'multiple' && Array.isArray(form.correctAnswer)) {
+      form.correctAnswer = form.correctAnswer
         .map(ans => ans > index ? ans - 1 : ans)
-  }
-}
-
-const addNewQuestion = () => {
-  if (newQuestion.value.question.trim() && newQuestion.value.options.every(opt => opt.trim())) {
-    addQuestion({
-      ...newQuestion.value,
-      options: newQuestion.value.options.filter(opt => opt.trim())
-    })
-
-    // 修复：重置时保持 correctAnswer 类型一致
-    newQuestion.value = {
-      type: 'single',
-      question: '',
-      options: ['', ''],
-      correctAnswer: 0,
-      score: 10
+        .filter(ans => ans !== index)
     }
-    showAddModal.value = false
   }
 }
+
+const handleFileUpload = (event, type) => {
+  const file = event.target.files[0]
+  if (file) {
+    form[type] = file
+  }
+}
+
+const handleSubmit = async () => {
+  // 验证表单
+  if (!form.question.trim()) {
+    alert('请输入题目内容')
+    return
+  }
+  
+  if (form.options.some(opt => !opt.trim())) {
+    alert('请填写所有选项')
+    return
+  }
+  
+  if (form.correctAnswer === null || 
+      (Array.isArray(form.correctAnswer) && form.correctAnswer.length === 0)) {
+    alert('请选择正确答案')
+    return
+  }
+  
+  isLoading.value = true
+  
+  const questionData = {
+    type: form.type,
+    question: form.question.trim(),
+    options: form.options.map(opt => opt.trim()),
+    correctAnswer: form.correctAnswer,
+    score: parseInt(form.score),
+    image: form.image,
+    audio: form.audio,
+    video: form.video
+  }
+  
+  try {
+    let result
+    if (editingQuestion.value) {
+      // 编辑题目
+      result = await examStore.updateQuestion(editingQuestion.value.id, questionData)
+    } else {
+      // 添加新题目
+      result = await examStore.addQuestion(questionData)
+    }
+    
+    if (result.success) {
+      closeModal()
+    } else {
+      alert(result.error || '操作失败')
+    }
+  } catch (error) {
+    console.error('提交题目失败:', error)
+    alert('提交失败，请重试')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const deleteQuestion = async (question) => {
+  if (confirm(`确定要删除题目"${question.question}"吗？`)) {
+    const result = await examStore.deleteQuestion(question.id)
+    if (!result.success) {
+      alert(result.error || '删除失败')
+    }
+  }
+}
+
+const toggleCorrectAnswer = (optionIndex) => {
+  if (form.type === 'single') {
+    form.correctAnswer = optionIndex
+  } else {
+    if (!Array.isArray(form.correctAnswer)) {
+      form.correctAnswer = []
+    }
+    const index = form.correctAnswer.indexOf(optionIndex)
+    if (index > -1) {
+      form.correctAnswer.splice(index, 1)
+    } else {
+      form.correctAnswer.push(optionIndex)
+    }
+  }
+}
+
+const getMediaUrl = (url) => {
+  if (!url) return null
+  return url.startsWith('http') ? url : `http://localhost:3001${url}`
+}
+
+onMounted(async () => {
+  // 加载题目列表
+  await examStore.fetchQuestions()
+})
 </script>
